@@ -1,0 +1,63 @@
+{% extends 'stores/dashboard/base_dashboard.html' %}
+
+{% block title %}{{ action }} cửa hàng{% endblock %}
+{% block page_title %}🏪 {{ action }} cửa hàng{% endblock %}
+{% block active_stores %}active{% endblock %}
+
+{% block content %}
+<div style="max-width:700px">
+  <div style="margin-bottom:1.25rem">
+    <a href="{% url 'dashboard_store_list' %}" class="btn btn-secondary btn-sm">← Quay lại</a>
+  </div>
+
+  <div class="card">
+    <h2 style="font-size:1rem;font-weight:700;margin-bottom:1.5rem">{{ action }} cửa hàng</h2>
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tên cửa hàng *</label>
+          <input class="form-control" type="text" name="name" value="{{ store.name|default:'' }}" placeholder="VD: PhoneStore Quận 1" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Số điện thoại</label>
+          <input class="form-control" type="text" name="phone_number" value="{{ store.phone_number|default:'' }}" placeholder="0901234567" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Địa chỉ</label>
+        <input class="form-control" type="text" name="address" value="{{ store.address|default:'' }}" placeholder="123 Nguyễn Huệ, Q1, TP.HCM" />
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Vĩ độ (Latitude) *</label>
+          <input class="form-control" type="number" step="any" name="latitude" value="{{ store.latitude|default:'' }}" placeholder="Để trống nếu chưa có" />
+          <p class="form-hint">Ví dụ: 10.7769 (TP.HCM)</p>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Kinh độ (Longitude) *</label>
+          <input class="form-control" type="number" step="any" name="longitude" value="{{ store.longitude|default:'' }}" placeholder="Để trống nếu chưa có" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Số Zalo</label>
+        <input class="form-control" type="text" name="zalo_number" value="{{ store.zalo_number|default:'' }}" placeholder="0901234567" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Mô tả cửa hàng</label>
+        <textarea class="form-control" name="description" placeholder="Giới thiệu ngắn về cửa hàng...">{{ store.description|default:'' }}</textarea>
+      </div>
+
+      <div style="display:flex;gap:.75rem;padding-top:.5rem">
+        <button type="submit" class="btn btn-primary">💾 Lưu cửa hàng</button>
+        <a href="{% url 'dashboard_store_list' %}" class="btn btn-secondary">Hủy</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

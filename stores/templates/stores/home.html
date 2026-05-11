@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhoneStore – Điện thoại chính hãng</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f3f4f6;
+            color: #111827;
+        }
+
+        /* ===== HEADER ===== */
+        header {
+            background: #fff;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 0 24px;
+            height: 62px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: inherit;
+            flex-shrink: 0;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #4f6ef7, #818cf8);
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .logo-text {
+            font-size: 1.1rem;
+            font-weight: 800;
+        }
+
+        .logo-text span {
+            color: #4f6ef7;
+        }
+
+        /* Search bar */
+        .header-search {
+            flex: 1;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .header-search input {
+            width: 100%;
+            padding: 8px 16px 8px 38px;
+            border: 1.5px solid #d1d5db;
+            border-radius: 99px;
+            font-size: 0.875rem;
+            outline: none;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .header-search input:focus {
+            border-color: #4f6ef7;
+            box-shadow: 0 0 0 3px rgba(79,110,247,.12);
+        }
+
+        .header-search .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            font-size: 0.9rem;
+        }
+
+        /* Header right actions */
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Cart button */
+        .btn-cart {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: #f3f4f6;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #374151;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .btn-cart:hover {
+            background: #e5e7eb;
+        }
+
+        .cart-count {
+            background: #dc2626;
+            color: white;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 1px 5px;
+            border-radius: 99px;
+            min-width: 18px;
+            text-align: center;
+        }
+
+        /* GIS button - top right */
+        .btn-gis-header {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 9px 18px;
+            background: linear-gradient(135deg, #4f6ef7, #818cf8);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(79, 110, 247, 0.3);
+            white-space: nowrap;
+        }
+
+        .btn-gis-header:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(79, 110, 247, 0.45);
+        }
+
+        /* ===== CATEGORY BAR ===== */
+        .category-bar {
+            background: #fff;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            height: 50px;
+        }
+
+        .category-bar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .cat-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 6px 14px;
+            border-radius: 99px;
+            border: 1.5px solid #e5e7eb;
+            background: #fff;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #6b7280;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .cat-btn:hover {
+            border-color: #4f6ef7;
+            color: #4f6ef7;
+        }
+
+        .cat-btn.active {
+            background: #4f6ef7;
+            border-color: #4f6ef7;
+            color: white;
+        }
+
+        /* ===== BANNER ===== */
+        .banner {
+            background: linear-gradient(135deg, #3d5ae0 0%, #4f6ef7 45%, #818cf8 80%, #06b6d4 100%);
+            padding: 32px 24px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .banner-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .banner::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.05) 1px, transparent 0);
+            background-size: 28px 28px;
+        }
+
+        .banner h1 {
+            font-size: clamp(1.2rem, 2.5vw, 1.7rem);
+            font-weight: 800;
+            margin-bottom: 6px;
+            position: relative;
+        }
+
+        .banner p {
+            opacity: 0.85;
+            font-size: 0.9rem;
+            position: relative;
+        }
+
+        .banner-tags {
+            display: flex;
+            gap: 8px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+            position: relative;
+        }
+
+        .banner-tag {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 99px;
+        }
+
+        /* ===== MAIN ===== */
+        main {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 24px 20px 60px;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .product-count-badge {
+            font-size: 0.75rem;
+            color: #6b7280;
+            background: #e5e7eb;
+            padding: 3px 10px;
+            border-radius: 99px;
+        }
+
+        /* ===== PRODUCT GRID ===== */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 14px;
+        }
+
+        .product-card {
+            background: #fff;
+            border-radius: 14px;
+            border: 1px solid #e5e7eb;
+            overflow: hidden;
+            transition: all 0.22s;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .product-card.hidden {
+            display: none;
+        }
+
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.1);
+            border-color: #c7d2fe;
+        }
+
+        .stock-tag {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            font-size: 0.6rem;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 5px;
+            z-index: 2;
+        }
+
+        .stock-in_stock {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .stock-low_stock {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .stock-out_of_stock {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+       .product-img{
+    height:160px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:10px;
+    overflow:hidden;
+}
+
+.product-img img{
+    max-width:100%;
+    max-height:140px;
+    object-fit:contain;
+    transition:transform .3s;
+}
+
+.product-card:hover .product-img img{
+    transform:scale(1.05);
+}
+
+        .product-card:hover .product-img {
+            transform: scale(1.07);
+        }
+
+        .brand-apple {
+            background: linear-gradient(145deg, #f5f5f7, #e8e8ed);
+        }
+
+        .brand-samsung {
+            background: linear-gradient(145deg, #e8f4ff, #cce4ff);
+        }
+
+        .brand-xiaomi {
+            background: linear-gradient(145deg, #fff3e8, #ffe0c0);
+        }
+
+        .brand-oppo {
+            background: linear-gradient(145deg, #e8fff0, #c0f0d0);
+        }
+
+        .brand-vivo {
+            background: linear-gradient(145deg, #f0e8ff, #d8c0ff);
+        }
+
+        .brand-realme {
+            background: linear-gradient(145deg, #fff0f0, #ffd0d0);
+        }
+
+        .brand-other {
+            background: linear-gradient(145deg, #f0f4ff, #dde4ff);
+        }
+
+        .product-body {
+            padding: 12px 14px 14px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .pname {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #111827;
+            line-height: 1.4;
+            margin-bottom: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            min-height: 2.4em;
+        }
+
+        .pstore {
+            font-size: 0.72rem;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+
+        .pprice {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: #dc2626;
+            margin-bottom: 10px;
+            letter-spacing: -0.01em;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: auto;
+        }
+
+        .btn-add-cart {
+            flex: 1;
+            padding: 8px 0;
+            background: #fff;
+            border: 1.5px solid #4f6ef7;
+            color: #4f6ef7;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .btn-add-cart:hover {
+            background: #4f6ef7;
+            color: white;
+        }
+
+        .btn-add-cart:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .btn-find-store {
+            padding: 8px 10px;
+            background: linear-gradient(135deg, #4f6ef7, #818cf8);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+        }
+
+        .btn-find-store:hover {
+            opacity: 0.85;
+        }
+
+        /* ===== CART DRAWER ===== */
+        .cart-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 200;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .cart-overlay.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .cart-drawer {
+            position: fixed;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 360px;
+            max-width: 90vw;
+            background: white;
+            z-index: 201;
+            display: flex;
+            flex-direction: column;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .cart-drawer.open {
+            transform: translateX(0);
+        }
+
+        .cart-header {
+            padding: 18px 20px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .cart-header h3 {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .btn-close-cart {
+            width: 30px;
+            height: 30px;
+            background: #f3f4f6;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cart-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
+        }
+
+        .cart-empty {
+            text-align: center;
+            color: #9ca3af;
+            padding: 40px 0;
+        }
+
+        .cart-empty .emoji {
+            font-size: 2.5rem;
+            margin-bottom: 8px;
+        }
+
+        .cart-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .cart-item-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            flex-shrink: 0;
+        }
+
+        .cart-item-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .cart-item-name {
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        .cart-item-price {
+            font-size: 0.78rem;
+            color: #dc2626;
+            font-weight: 700;
+            margin-top: 2px;
+        }
+
+        .cart-item-remove {
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            background: #fee2e2;
+            border: none;
+            color: #dc2626;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .cart-footer {
+            padding: 16px 20px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .cart-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .cart-total-label {
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+
+        .cart-total-value {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #111827;
+        }
+
+        .btn-checkout {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #dc2626, #ef4444);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        /* ===== FOOTER ===== */
+        footer {
+            background: #f5f6fa;
+            border-top: 1px solid #e2e6f0;
+            color: #6b7280;
+            text-align: center;
+            padding: 24px;
+            font-size: 0.82rem;
+        }
+
+        footer a {
+            color: #4f6ef7;
+            text-decoration: none;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 600px) {
+            .header-search {
+                display: none;
+            }
+
+            .product-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .product-img {
+                height: 130px;
+                font-size: 3.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <header>
+        <a href="/" class="logo">
+            <div class="logo-icon">📱</div>
+            <span class="logo-text">Phone<span>Store</span></span>
+        </a>
+
+        <form class="header-search" action="/search/" method="get">
+            <span class="search-icon">🔍</span>
+            <input type="text" name="q" id="searchInput" placeholder="Tìm điện thoại, iPhone, Samsung...">
+        </form>
+
+        <div class="header-actions">
+            <!-- Auth links -->
+            {% if user.is_authenticated %}
+            <span style="font-size:.8rem;color:#6b7280">{{ user.username }}</span>
+            {% if user.is_staff %}
+            <a href="/dashboard/" class="btn-cart" style="text-decoration:none;background:linear-gradient(135deg,#7c6dff,#ff6b85);color:#fff;border-color:transparent">⚙️ Dashboard</a>
+            {% endif %}
+            <a href="/my-orders/" class="btn-cart" style="text-decoration:none">📋 Đơn hàng</a>
+            <a href="/logout/" class="btn-cart" style="text-decoration:none">Đăng xuất</a>
+            {% else %}
+            <a href="/login/" class="btn-cart" style="text-decoration:none">Đăng nhập</a>
+            <a href="/register/" class="btn-cart" style="text-decoration:none;background:#1a56db;color:#fff;border-color:#1a56db">Đăng ký</a>
+            {% endif %}
+
+            <!-- Cart button -->
+            <a href="/cart/" class="btn-cart" id="cartBtn" style="text-decoration:none">
+                🛒 Giỏ hàng
+                {% if cart_count %}<span class="cart-count">{{ cart_count }}</span>{% endif %}
+            </a>
+
+            <!-- GIS button – top right -->
+            <a href="/find/" class="btn-gis-header" id="gis-main-btn">
+                📍 Bản đồ GIS
+            </a>
+        </div>
+    </header>
+
+    <!-- CATEGORY BAR -->
+    <div class="category-bar">
+        <button class="cat-btn active" onclick="filterByBrand('all', this)">🏪 Tất cả</button>
+        <button class="cat-btn" onclick="filterByBrand('apple', this)">🍎 Apple</button>
+        <button class="cat-btn" onclick="filterByBrand('samsung', this)">🌀 Samsung</button>
+        <button class="cat-btn" onclick="filterByBrand('xiaomi', this)">⚡ Xiaomi</button>
+        <button class="cat-btn" onclick="filterByBrand('oppo', this)">🟢 OPPO</button>
+        <button class="cat-btn" onclick="filterByBrand('vivo', this)">💜 Vivo</button>
+        <button class="cat-btn" onclick="filterByBrand('realme', this)">🔴 Realme</button>
+        <button class="cat-btn" onclick="filterByBrand('other', this)">📱 Khác</button>
+    </div>
+
+    <!-- BANNER -->
+    <div class="banner">
+        <div class="banner-inner">
+            <h1>🏆 Điện thoại chính hãng – Giá tốt nhất TP.HCM</h1>
+            <p>Bấm <strong>"📍 Bản đồ GIS"</strong> để tìm cửa hàng gần bạn và xem đường đi ngay!</p>
+            <div class="banner-tags">
+                <span class="banner-tag">✅ Chính hãng</span>
+                <span class="banner-tag">🛡 BH 12 tháng</span>
+                <span class="banner-tag">📍 GIS định vị</span>
+                <span class="banner-tag">🚀 Giao hàng nhanh</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- PRODUCT LIST -->
+    <main>
+        <div class="section-title">
+            <span>📱 Danh sách sản phẩm</span>
+            <span class="product-count-badge" id="visibleCount">{{ phones|length }} sản phẩm</span>
+        </div>
+
+        <div class="product-grid" id="productGrid">
+            {% for item in phones %}
+            {% with phone=item.phone brand=item.brand emoji=item.emoji disabled=item.disabled %}
+
+            <div class="product-card" data-brand="{{ brand }}" data-name="{{ phone.phone_name|lower }}"
+                data-store="{{ phone.store.name }}" data-lat="{{ phone.store.latitude }}"
+                data-lng="{{ phone.store.longitude }}" data-price="{{ phone.price }}" data-emoji="{{ emoji }}"
+                data-id="{{ phone.id }}">
+
+                <div class="stock-tag stock-{{ phone.stock_status }}">{{ phone.get_stock_label }}</div>
+
+                <a href="/product/{{ phone.pk }}/" style="text-decoration:none;color:inherit">
+                    <div class="product-img brand-{{ brand }}">
+                        {% if phone.image %}
+                            <img src="{{ phone.image.url }}" alt="{{ phone.phone_name }}" loading="lazy">
+                        {% elif phone.image_url %}
+                            <img src="{{ phone.image_url }}" alt="{{ phone.phone_name }}" loading="lazy">
+                        {% else %}
+                            <span style="font-size:3rem">{{ emoji }}</span>
+                        {% endif %}
+                    </div>
+                </a>
+                <div class="product-body">
+                    <a href="/product/{{ phone.pk }}/" style="text-decoration:none;color:inherit">
+                        <div class="pname">{{ phone.phone_name }}</div>
+                    </a>
+                    <div class="pstore">🏪 {{ phone.store.name }}</div>
+                    <div class="pprice">{{ phone.price|floatformat:0 }} ₫</div>
+
+                    <div class="card-actions">
+                        {% if not disabled %}
+                        <form method="post" action="/cart/add/{{ phone.pk }}/" style="flex:1">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="/" />
+                            <button type="submit" class="btn-add-cart" style="width:100%">+ Giỏ hàng</button>
+                        </form>
+                        {% else %}
+                        <button class="btn-add-cart" disabled style="flex:1">Hết hàng</button>
+                        {% endif %}
+                        <a href="/find/?store_lat={{ phone.store.latitude }}&store_lng={{ phone.store.longitude }}" class="btn-find-store" title="Tìm cửa hàng">📍</a>
+                    </div>
+                </div>
+            </div>
+
+            {% endwith %}
+            {% empty %}
+            <div style="grid-column:1/-1;text-align:center;padding:60px;color:#6b7280">
+                <div style="font-size:3rem;margin-bottom:12px">📱</div>
+                <p>Chưa có sản phẩm. Thêm qua <a href="/admin/" style="color:#1a56db">Admin</a></p>
+            </div>
+            {% endfor %}
+        </div>
+    </main>
+
+    <!-- CART DRAWER -->
+    <div class="cart-overlay" id="cartOverlay" onclick="toggleCart()"></div>
+    <div class="cart-drawer" id="cartDrawer">
+        <div class="cart-header">
+            <h3>🛒 Giỏ hàng của bạn</h3>
+            <button class="btn-close-cart" onclick="toggleCart()">✕</button>
+        </div>
+        <div class="cart-items" id="cartItems">
+            <div class="cart-empty">
+                <div class="emoji">🛒</div>
+                <p>Giỏ hàng trống</p>
+            </div>
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span class="cart-total-label">Tổng cộng:</span>
+                <span class="cart-total-value" id="cartTotal">0 ₫</span>
+            </div>
+            <button class="btn-checkout" onclick="alert('Chức năng thanh toán đang được phát triển!')">
+                Tiến hành thanh toán →
+            </button>
+        </div>
+    </div>
+
+    <footer>
+        © 2026 PhoneStore · Cửa hàng điện thoại TP.HCM
+        &nbsp;|&nbsp; <a href="/find/">🗺 Bản đồ GIS</a>
+        &nbsp;|&nbsp; <a href="/admin/">Admin</a>
+    </footer>
+
+    <script>
+        // ===== CART STATE =====
+        let cart = JSON.parse(localStorage.getItem('phonemap_cart') || '[]');
+        renderCart();
+
+        function saveCart() {
+            localStorage.setItem('phonemap_cart', JSON.stringify(cart));
+        }
+
+        function addToCart(btn) {
+            var card = btn.closest('.product-card');
+            var item = {
+                id: card.dataset.id,
+                name: card.dataset.name,
+                price: parseInt(card.dataset.price),
+                emoji: card.dataset.emoji,
+                store: card.dataset.store,
+            };
+            var existing = cart.find(function (c) { return c.id === item.id; });
+            if (existing) {
+                existing.qty = (existing.qty || 1) + 1;
+            } else {
+                item.qty = 1;
+                cart.push(item);
+            }
+            saveCart();
+            renderCart();
+
+            // Button feedback
+            btn.textContent = '✓ Đã thêm';
+            btn.style.background = '#1a56db';
+            btn.style.color = 'white';
+            setTimeout(function () {
+                btn.textContent = '+ Giỏ hàng';
+                btn.style.background = '';
+                btn.style.color = '';
+            }, 1200);
+        }
+
+        function removeFromCart(id) {
+            cart = cart.filter(function (c) { return c.id !== id; });
+            saveCart();
+            renderCart();
+        }
+
+        function renderCart() {
+            var total = cart.reduce(function (s, c) { return s + c.price * (c.qty || 1); }, 0);
+            var count = cart.reduce(function (s, c) { return s + (c.qty || 1); }, 0);
+
+            document.getElementById('cartCount').textContent = count;
+            document.getElementById('cartTotal').textContent = total.toLocaleString('vi-VN') + ' ₫';
+
+            var el = document.getElementById('cartItems');
+            if (cart.length === 0) {
+                el.innerHTML = '<div class="cart-empty"><div class="emoji">🛒</div><p>Giỏ hàng trống</p></div>';
+                return;
+            }
+            el.innerHTML = cart.map(function (c) {
+                return '<div class="cart-item">'
+                    + '<div class="cart-item-icon brand-' + (c.brand || 'other') + '">' + c.emoji + '</div>'
+                    + '<div class="cart-item-info">'
+                    + '<div class="cart-item-name">' + c.name + '</div>'
+                    + '<div class="cart-item-price">' + (c.price * (c.qty || 1)).toLocaleString('vi-VN') + ' ₫'
+                    + (c.qty > 1 ? ' <span style="color:#6b7280;font-weight:400">x' + c.qty + '</span>' : '') + '</div>'
+                    + '</div>'
+                    + '<button class="cart-item-remove" onclick="removeFromCart(\'' + c.id + '\')">✕</button>'
+                    + '</div>';
+            }).join('');
+        }
+
+        function toggleCart() {
+            document.getElementById('cartDrawer').classList.toggle('open');
+            document.getElementById('cartOverlay').classList.toggle('open');
+        }
+
+        // ===== FILTER BY BRAND =====
+        var currentBrand = 'all';
+
+        function filterByBrand(brand, btn) {
+            currentBrand = brand;
+            document.querySelectorAll('.cat-btn').forEach(function (b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            applyFilters();
+        }
+
+        function filterProducts() {
+            applyFilters();
+        }
+
+
+        function applyFilters() {
+            var search = document.getElementById('searchInput').value.toLowerCase();
+            var cards = document.querySelectorAll('.product-card');
+            var visible = 0;
+            cards.forEach(function (card) {
+                var matchBrand = currentBrand === 'all' || card.dataset.brand === currentBrand;
+                var matchSearch = !search
+                    || card.dataset.name.includes(search)
+                    || (card.dataset.store || '').toLowerCase().includes(search);
+                if (matchBrand && matchSearch) {
+                    card.classList.remove('hidden');
+                    visible++;
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+            document.getElementById('visibleCount').textContent = visible + ' sản phẩm';
+        }
+    </script>
+
+</body>
+
+</html>

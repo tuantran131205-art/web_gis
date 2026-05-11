@@ -1,0 +1,95 @@
+{% extends 'stores/dashboard/base_dashboard.html' %}
+
+{% block title %}{{ action }} sản phẩm{% endblock %}
+{% block page_title %}📱 {{ action }} sản phẩm{% endblock %}
+{% block active_products %}active{% endblock %}
+
+{% block content %}
+<div style="max-width:800px">
+  <div style="margin-bottom:1.25rem">
+    <a href="{% url 'dashboard_product_list' %}" class="btn btn-secondary btn-sm">← Quay lại</a>
+  </div>
+
+  <div class="card">
+    <h2 style="font-size:1rem;font-weight:700;margin-bottom:1.5rem">{{ action }} sản phẩm</h2>
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="form-row">
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Tên sản phẩm *</label>
+          <input class="form-control" type="text" name="phone_name" value="{{ product.phone_name|default:'' }}"
+                 placeholder="VD: iPhone 16 Pro Max 256GB" required />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Cửa hàng *</label>
+          <select class="form-control" name="store_id" required>
+            <option value="">-- Chọn cửa hàng --</option>
+            {% for store in stores %}
+            <option value="{{ store.pk }}" {% if product and product.store_id == store.pk %}selected{% endif %}>{{ store.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tình trạng *</label>
+          <select class="form-control" name="stock_status">
+            {% for val, label in stock_choices %}
+            <option value="{{ val }}" {% if product and product.stock_status == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Giá bán (VNĐ) *</label>
+        <input class="form-control" type="number" name="price" value="{{ product.price|default:'' }}"
+               placeholder="VD: 25000000" min="0" required />
+        <p class="form-hint">Nhập số nguyên, không cần dấu phẩy. VD: 25000000 = 25 triệu</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">URL Hình ảnh</label>
+        <input class="form-control" type="url" name="image_url" value="{{ product.image_url|default:'' }}"
+               placeholder="https://..." id="imgUrlInput" oninput="previewImg(this)" />
+        <div id="img-preview" style="margin-top:.75rem;display:{% if product and product.image_url %}block{% else %}none{% endif %}">
+          <img id="img-preview-el" src="{{ product.image_url|default:'' }}" alt="preview"
+               style="height:100px;width:100px;object-fit:cover;border-radius:8px;border:1px solid var(--border)" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Mô tả sản phẩm</label>
+        <textarea class="form-control" name="description" placeholder="Mô tả ngắn về sản phẩm...">{{ product.description|default:'' }}</textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Thông số kỹ thuật</label>
+        <textarea class="form-control" name="specs" style="min-height:140px"
+          placeholder="Màn hình: 6.7 inch OLED&#10;Chip: A18 Pro&#10;RAM: 8GB&#10;Camera: 48MP&#10;Pin: 4500 mAh">{{ product.specs|default:'' }}</textarea>
+        <p class="form-hint">Mỗi dòng một thông số</p>
+      </div>
+
+      <div style="display:flex;gap:.75rem;padding-top:.5rem">
+        <button type="submit" class="btn btn-primary">💾 Lưu sản phẩm</button>
+        <a href="{% url 'dashboard_product_list' %}" class="btn btn-secondary">Hủy</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function previewImg(input) {
+  var preview = document.getElementById('img-preview');
+  var img = document.getElementById('img-preview-el');
+  if (input.value) {
+    img.src = input.value;
+    preview.style.display = 'block';
+  } else {
+    preview.style.display = 'none';
+  }
+}
+</script>
+{% endblock %}

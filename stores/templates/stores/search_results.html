@@ -1,0 +1,68 @@
+{% extends 'stores/base.html' %}
+{% load humanize %}
+
+{% block title %}Tìm kiếm: "{{ query }}" – PhoneStore{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div style="margin-bottom:2rem">
+    <h1 style="font-size:1.5rem;font-weight:700">
+      {% if query %}
+        🔍 Kết quả tìm kiếm cho "<span style="color:var(--accent)">{{ query }}</span>"
+        <span style="color:var(--text-muted);font-size:1rem;font-weight:400"> — {{ phones|length }} sản phẩm</span>
+      {% else %}
+        🔍 Tìm kiếm sản phẩm
+      {% endif %}
+    </h1>
+  </div>
+
+  {% if phones %}
+  <div class="grid-4">
+    {% for item in phones %}
+    <a href="/product/{{ item.phone.pk }}/" class="card" style="display:block;text-decoration:none;color:inherit">
+      <div style="height:180px;display:flex;align-items:center;justify-content:center;background:var(--surface2);position:relative">
+        {% if item.phone.image %}
+          <img src="{{ item.phone.image.url }}" alt="{{ item.phone.phone_name }}" style="width:100%;height:100%;object-fit:cover" />
+        {% elif item.phone.image_url %}
+          <img src="{{ item.phone.image_url }}" alt="{{ item.phone.phone_name }}" style="width:100%;height:100%;object-fit:cover" />
+        {% else %}
+          <span style="font-size:3.5rem">{{ item.emoji }}</span>
+        {% endif %}
+        {% if item.phone.stock_status == 'out_of_stock' %}
+          <div style="position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;font-size:.85rem;color:#fff;font-weight:600">Hết hàng</div>
+        {% endif %}
+      </div>
+      <div style="padding:1rem">
+        <p style="font-weight:700;font-size:.95rem;margin-bottom:.3rem;line-height:1.4">{{ item.emoji }} {{ item.phone.phone_name }}</p>
+        <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:.5rem">🏪 {{ item.phone.store.name }}</p>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span class="price" style="font-size:1rem">{{ item.phone.price|intcomma }} ₫</span>
+          {% if item.phone.stock_status == 'low_stock' %}
+            <span class="status-badge status-low_stock" style="font-size:.7rem">Sắp hết</span>
+          {% elif item.phone.stock_status == 'in_stock' %}
+            <span class="status-badge status-in_stock" style="font-size:.7rem">Còn hàng</span>
+          {% endif %}
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+
+  {% elif query %}
+  <div class="empty-state">
+    <div class="icon">🔍</div>
+    <h2 style="font-size:1.25rem;font-weight:700;margin-bottom:.5rem">Không tìm thấy sản phẩm</h2>
+    <p style="margin-bottom:1.5rem">Không có kết quả cho "<strong>{{ query }}</strong>". Hãy thử từ khóa khác.</p>
+    <a href="/" class="btn btn-secondary">← Xem tất cả sản phẩm</a>
+  </div>
+
+  {% else %}
+  <div class="empty-state">
+    <div class="icon">💡</div>
+    <h2>Gợi ý tìm kiếm</h2>
+    <p style="margin:.75rem 0">iPhone 15, Samsung Galaxy, Xiaomi Redmi, Oppo, Vivo...</p>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

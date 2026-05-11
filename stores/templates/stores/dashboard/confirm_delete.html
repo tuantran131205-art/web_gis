@@ -1,0 +1,24 @@
+{% extends 'stores/dashboard/base_dashboard.html' %}
+
+{% block title %}Xác nhận xóa{% endblock %}
+{% block page_title %}⚠️ Xác nhận xóa{% endblock %}
+
+{% block content %}
+<div style="max-width:480px;margin:0 auto">
+  <div class="card" style="text-align:center;padding:2.5rem">
+    <div style="font-size:3rem;margin-bottom:1rem">🗑️</div>
+    <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:.75rem">Bạn có chắc muốn xóa?</h2>
+    <p style="color:var(--muted);margin-bottom:2rem;font-size:.9rem">
+      Hành động này không thể hoàn tác:<br>
+      <strong style="color:var(--text)">{{ object_name }}</strong>
+    </p>
+    <div style="display:flex;gap:.75rem;justify-content:center">
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">🗑️ Xác nhận xóa</button>
+      </form>
+      <a href="{% url back_url %}" class="btn btn-secondary">← Hủy bỏ</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

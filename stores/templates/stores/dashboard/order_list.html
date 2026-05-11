@@ -1,0 +1,63 @@
+{% extends 'stores/dashboard/base_dashboard.html' %}
+{% load humanize %}
+
+{% block title %}Đơn hàng{% endblock %}
+{% block page_title %}📋 Quản lý Đơn hàng{% endblock %}
+{% block active_orders %}active{% endblock %}
+
+{% block content %}
+<div class="section-head">
+  <h2>Đơn hàng ({{ orders|length }})</h2>
+</div>
+
+<!-- Filters -->
+<div class="search-bar">
+  <form method="get" style="display:flex;gap:.5rem;flex-wrap:wrap">
+    <input class="search-input" type="text" name="q" value="{{ q }}" placeholder="🔍 Tên, số điện thoại..." />
+    <select name="status" class="search-input" style="min-width:auto">
+      <option value="">Tất cả trạng thái</option>
+      {% for val, label in status_choices %}
+      <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-secondary">Lọc</button>
+    {% if q or status_filter %}<a href="{% url 'dashboard_order_list' %}" class="btn btn-secondary">✕ Xóa lọc</a>{% endif %}
+  </form>
+</div>
+
+<div class="card" style="padding:0">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>Khách hàng</th><th>SĐT</th><th>Sản phẩm</th>
+          <th>Tổng tiền</th><th>Thanh toán</th><th>Trạng thái</th><th>Ngày đặt</th>
+          <th style="text-align:right">Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for order in orders %}
+        <tr>
+          <td><strong>#{{ order.id }}</strong></td>
+          <td>{{ order.full_name }}</td>
+          <td style="color:var(--muted)">{{ order.phone }}</td>
+          <td style="color:var(--muted);font-size:.8rem">{{ order.items.count }} SP</td>
+          <td style="font-weight:700;color:#ff6b85">{{ order.total_amount|intcomma }} ₫</td>
+          <td style="color:var(--muted);font-size:.78rem">{{ order.get_payment_method_display }}</td>
+          <td><span class="badge badge-{{ order.status }}">{{ order.get_status_display }}</span></td>
+          <td style="color:var(--muted);font-size:.8rem">{{ order.created_at|date:"d/m/Y H:i" }}</td>
+          <td style="text-align:right">
+            <div style="display:flex;gap:.4rem;justify-content:flex-end">
+              <a href="{% url 'dashboard_order_detail' order.pk %}" class="btn btn-secondary btn-sm">🔍 Chi tiết</a>
+              <a href="{% url 'dashboard_order_delete' order.pk %}" class="btn btn-danger btn-sm">🗑️</a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="9"><div class="empty"><div class="icon">📋</div><p>Chưa có đơn hàng nào</p></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

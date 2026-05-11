@@ -1,0 +1,294 @@
+{% extends 'stores/dashboard/base_dashboard.html' %}
+{% load humanize %}
+
+{% block title %}Tổng quan{% endblock %}
+{% block page_title %}📊 Dashboard{% endblock %}
+{% block active_home %}active{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:1.25rem;margin-bottom:2rem}
+  .kpi{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.35rem 1.5rem;
+       display:flex;flex-direction:column;gap:.35rem;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s}
+  .kpi:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+  .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:16px 16px 0 0}
+  .kpi.purple::before{background:linear-gradient(90deg,#7c6dff,#a78bfa)}
+  .kpi.pink::before{background:linear-gradient(90deg,#ff6b85,#f9a8d4)}
+  .kpi.green::before{background:linear-gradient(90deg,#22c55e,#86efac)}
+  .kpi.amber::before{background:linear-gradient(90deg,#f59e0b,#fcd34d)}
+  .kpi .icon{font-size:1.7rem;margin-bottom:.1rem}
+  .kpi .label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+  .kpi .value{font-size:1.8rem;font-weight:800;line-height:1.1}
+  .kpi .sub{font-size:.72rem;color:var(--muted)}
+  .kpi .trend{position:absolute;top:1.1rem;right:1.25rem;font-size:.7rem;font-weight:700;
+    padding:.15rem .5rem;border-radius:50px}
+  .trend-up{background:rgba(34,197,94,.15);color:#22c55e}
+  .trend-warn{background:rgba(245,158,11,.15);color:#f59e0b}
+
+  .charts-grid{display:grid;grid-template-columns:2fr 1fr;gap:1.5rem;margin-bottom:1.75rem}
+  .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.5rem}
+  .chart-title{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.7px;
+    color:var(--muted);margin-bottom:1.1rem;display:flex;align-items:center;gap:.5rem}
+
+  .bottom-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem}
+
+  /* Recent orders mini table */
+  .mini-table{width:100%;border-collapse:collapse}
+  .mini-table th{font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:.7px;
+    color:var(--muted);padding:.5rem .65rem;text-align:left;border-bottom:1px solid var(--border)}
+  .mini-table td{padding:.6rem .65rem;font-size:.82rem;border-bottom:1px solid rgba(255,255,255,.04)}
+  .mini-table tr:last-child td{border:none}
+  .mini-table tr:hover td{background:rgba(124,109,255,.05)}
+
+  @media(max-width:1024px){
+    .charts-grid{grid-template-columns:1fr}
+    .bottom-grid{grid-template-columns:1fr}
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- KPI Cards -->
+<div class="kpi-grid">
+  <div class="kpi purple">
+    <span class="icon">📱</span>
+    <span class="label">Sản phẩm</span>
+    <span class="value">{{ total_products }}</span>
+    <span class="sub">{{ out_of_stock }} hết hàng · {{ low_stock }} sắp hết</span>
+    {% if out_of_stock %}<span class="trend trend-warn">⚠️ {{ out_of_stock }} hết</span>{% endif %}
+  </div>
+  <div class="kpi green">
+    <span class="icon">🏪</span>
+    <span class="label">Cửa hàng</span>
+    <span class="value">{{ total_stores }}</span>
+    <span class="sub">đang hoạt động</span>
+  </div>
+  <div class="kpi amber">
+    <span class="icon">📋</span>
+    <span class="label">Tổng đơn hàng</span>
+    <span class="value">{{ total_orders }}</span>
+    <span class="sub">{{ pending_orders }} chờ xác nhận</span>
+    {% if pending_orders %}<span class="trend trend-warn">⏳ {{ pending_orders }}</span>{% endif %}
+  </div>
+  <div class="kpi pink">
+    <span class="icon">💰</span>
+    <span class="label">Doanh thu tháng</span>
+    <span class="value" style="font-size:1.2rem">{{ revenue_month|intcomma }}<small style="font-size:.7rem"> ₫</small></span>
+    <span class="sub">Tổng: {{ revenue_total|intcomma }} ₫</span>
+    <span class="trend trend-up">Tổng cộng</span>
+  </div>
+</div>
+
+<!-- Charts row -->
+<div class="charts-grid">
+  <!-- Revenue line chart -->
+  <div class="chart-card">
+    <div class="chart-title">📈 Doanh thu 7 ngày qua</div>
+    <canvas id="revenueChart" style="max-height:220px"></canvas>
+  </div>
+  <!-- Donut chart status -->
+  <div class="chart-card" style="display:flex;flex-direction:column">
+    <div class="chart-title">🍩 Trạng thái đơn hàng</div>
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;position:relative">
+      <canvas id="statusChart" style="max-height:200px;max-width:200px"></canvas>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:.3rem;margin-top:.75rem">
+      {% for key, count in status_counts.items %}
+      <div style="display:flex;align-items:center;justify-content:space-between;font-size:.78rem">
+        <span class="badge badge-{{ key }}">
+          {% if key == 'pending' %}⏳ Chờ{% elif key == 'confirmed' %}✅ Xác nhận
+          {% elif key == 'shipping' %}🚚 Giao{% elif key == 'delivered' %}📦 Đã giao
+          {% elif key == 'cancelled' %}❌ Hủy{% endif %}
+        </span>
+        <strong>{{ count }}</strong>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Bottom row: Orders chart + Top products + Recent orders -->
+<div class="bottom-grid">
+
+  <!-- Orders bar chart -->
+  <div class="chart-card">
+    <div class="chart-title">📦 Đơn hàng / ngày</div>
+    <canvas id="ordersChart" style="max-height:180px"></canvas>
+  </div>
+
+  <!-- Top products -->
+  <div class="chart-card">
+    <div class="chart-title">🏆 Top sản phẩm bán chạy</div>
+    {% if top_products %}
+    <div style="display:flex;flex-direction:column;gap:.6rem">
+      {% for p in top_products %}
+      <div style="display:flex;align-items:center;gap:.6rem">
+        <span style="width:20px;height:20px;border-radius:6px;background:
+          {% if forloop.counter == 1 %}linear-gradient(135deg,#f59e0b,#fcd34d)
+          {% elif forloop.counter == 2 %}linear-gradient(135deg,#94a3b8,#cbd5e1)
+          {% elif forloop.counter == 3 %}linear-gradient(135deg,#cd7c4b,#dcac80)
+          {% else %}var(--surface2){% endif %};
+          display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;flex-shrink:0;color:#111">
+          {{ forloop.counter }}
+        </span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:.78rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.product_name }}</div>
+        </div>
+        <span style="font-size:.75rem;font-weight:700;color:var(--accent);white-space:nowrap">×{{ p.total_qty }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align:center;color:var(--muted);padding:1.5rem;font-size:.85rem">Chưa có dữ liệu</div>
+    {% endif %}
+  </div>
+
+  <!-- Quick actions -->
+  <div class="chart-card">
+    <div class="chart-title">⚡ Thao tác nhanh</div>
+    <div style="display:flex;flex-direction:column;gap:.65rem">
+      <a href="{% url 'dashboard_product_create' %}" class="btn btn-primary" style="justify-content:center;border-radius:10px">➕ Thêm sản phẩm</a>
+      <a href="{% url 'dashboard_store_create' %}" class="btn btn-secondary" style="justify-content:center;border-radius:10px">🏪 Thêm cửa hàng</a>
+      <a href="{% url 'dashboard_order_list' %}?status=pending" class="btn btn-warn" style="justify-content:center;border-radius:10px">⏳ Đơn chờ ({{ pending_orders }})</a>
+      <a href="{% url 'home' %}" class="btn btn-secondary" style="justify-content:center;border-radius:10px" target="_blank">🌐 Xem website</a>
+    </div>
+  </div>
+</div>
+
+<!-- Recent orders full table -->
+<div class="chart-card" style="margin-top:1.5rem">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+    <div class="chart-title" style="margin:0">🕐 Đơn hàng gần đây</div>
+    <a href="{% url 'dashboard_order_list' %}" class="btn btn-secondary btn-sm">Xem tất cả →</a>
+  </div>
+  {% if recent_orders %}
+  <div style="overflow-x:auto">
+    <table class="mini-table">
+      <thead><tr>
+        <th>#</th><th>Khách hàng</th><th>SĐT</th>
+        <th>Tổng tiền</th><th>Thanh toán</th><th>Trạng thái</th><th>Thời gian</th><th></th>
+      </tr></thead>
+      <tbody>
+        {% for order in recent_orders %}
+        <tr>
+          <td><strong>#{{ order.id }}</strong></td>
+          <td>{{ order.full_name }}</td>
+          <td style="color:var(--muted)">{{ order.phone }}</td>
+          <td style="font-weight:700;color:#ff6b85">{{ order.total_amount|intcomma }} ₫</td>
+          <td style="color:var(--muted);font-size:.75rem">{{ order.get_payment_method_display }}</td>
+          <td><span class="badge badge-{{ order.status }}">{{ order.get_status_display }}</span></td>
+          <td style="color:var(--muted);font-size:.75rem">{{ order.created_at|date:"d/m H:i" }}</td>
+          <td><a href="{% url 'dashboard_order_detail' order.pk %}" class="btn btn-secondary btn-sm">→</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="text-align:center;padding:2rem;color:var(--muted)">📋 Chưa có đơn hàng nào</div>
+  {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// ── Common chart config ──────────────────────────────────────────────────
+Chart.defaults.color = '#8888a0';
+Chart.defaults.font.family = 'Inter, sans-serif';
+Chart.defaults.font.size = 11;
+
+const labels  = {{ chart_labels|safe }};
+const revenue = {{ chart_revenue|safe }};
+const orders  = {{ chart_orders|safe }};
+
+// ── Revenue line chart ───────────────────────────────────────────────────
+new Chart(document.getElementById('revenueChart'), {
+  type: 'line',
+  data: {
+    labels,
+    datasets: [{
+      label: 'Doanh thu (₫)',
+      data: revenue,
+      borderColor: '#7c6dff',
+      backgroundColor: 'rgba(124,109,255,.12)',
+      borderWidth: 2.5,
+      pointBackgroundColor: '#7c6dff',
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      tension: 0.4,
+      fill: true,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: { legend: { display: false }, tooltip: {
+      callbacks: { label: ctx => ' ' + ctx.raw.toLocaleString('vi-VN') + ' ₫' }
+    }},
+    scales: {
+      x: { grid: { color: 'rgba(255,255,255,.05)' }, border: { display: false } },
+      y: {
+        grid: { color: 'rgba(255,255,255,.05)' }, border: { display: false },
+        ticks: { callback: v => (v/1e6).toFixed(0)+'M' }
+      }
+    }
+  }
+});
+
+// ── Orders bar chart ─────────────────────────────────────────────────────
+new Chart(document.getElementById('ordersChart'), {
+  type: 'bar',
+  data: {
+    labels,
+    datasets: [{
+      label: 'Đơn hàng',
+      data: orders,
+      backgroundColor: 'rgba(255,107,133,.7)',
+      borderRadius: 6,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false }, border: { display: false } },
+      y: { grid: { color: 'rgba(255,255,255,.05)' }, border: { display: false }, ticks: { stepSize: 1 } }
+    }
+  }
+});
+
+// ── Donut chart ──────────────────────────────────────────────────────────
+const statusData = [
+  {{ status_counts.pending }},
+  {{ status_counts.confirmed }},
+  {{ status_counts.shipping }},
+  {{ status_counts.delivered }},
+  {{ status_counts.cancelled }},
+];
+new Chart(document.getElementById('statusChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Chờ xác nhận','Đã xác nhận','Đang giao','Đã giao','Đã hủy'],
+    datasets: [{
+      data: statusData,
+      backgroundColor: ['#f59e0b','#38bdf8','#7c6dff','#22c55e','#ef4444'],
+      borderColor: 'transparent',
+      borderWidth: 0,
+      hoverOffset: 8,
+    }]
+  },
+  options: {
+    cutout: '68%',
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw}` } }
+    }
+  }
+});
+</script>
+{% endblock %}

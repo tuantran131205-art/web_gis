@@ -1,0 +1,53 @@
+{% extends 'stores/base.html' %}
+
+{% block title %}Đăng ký – PhoneStore{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:480px">
+  <div class="card" style="padding:2rem">
+    <h1 style="font-size:1.75rem;font-weight:800;margin-bottom:.5rem">Tạo tài khoản 🎉</h1>
+    <p style="color:var(--text-muted);margin-bottom:2rem">Đăng ký để mua sắm và theo dõi đơn hàng</p>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label class="form-label" for="id_username">Tên đăng nhập</label>
+        <input class="form-control" type="text" name="username" id="id_username"
+               value="{{ form.username.value|default:'' }}" placeholder="Tên đăng nhập" autofocus />
+        {% if form.username.errors %}
+          <p class="form-error">{{ form.username.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="id_password1">Mật khẩu</label>
+        <input class="form-control" type="password" name="password1" id="id_password1" placeholder="Mật khẩu (ít nhất 8 ký tự)" />
+        {% if form.password1.errors %}
+          <p class="form-error">{{ form.password1.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="id_password2">Xác nhận mật khẩu</label>
+        <input class="form-control" type="password" name="password2" id="id_password2" placeholder="Nhập lại mật khẩu" />
+        {% if form.password2.errors %}
+          <p class="form-error">{{ form.password2.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      {% if form.non_field_errors %}
+        <p class="form-error" style="margin-bottom:1rem">{{ form.non_field_errors.0 }}</p>
+      {% endif %}
+
+      <button type="submit" class="btn btn-primary btn-block" style="margin-bottom:1rem">
+        🚀 Đăng ký ngay
+      </button>
+    </form>
+
+    <p style="text-align:center;color:var(--text-muted);font-size:.9rem">
+      Đã có tài khoản? <a href="/login/">Đăng nhập</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

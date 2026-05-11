@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+{% load l10n %}
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>WebGIS – Tìm cửa hàng điện thoại</title>
+
+  <!-- Ghim Leaflet 1.9.x: bản 2.x mặc định không còn biến global L → bản đồ trắng -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f0f4f8;
+      color: #1a202c;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1a56db, #6366f1);
+      color: white;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    header h1 {
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    #map {
+      height: calc(100vh - 64px);
+      min-height: 320px;
+      width: 100%;
+    }
+
+    /* ===== LEAFLET POPUP STYLES ===== */
+    .store-popup {
+      font-family: 'Inter', sans-serif;
+      width: 285px;
+    }
+
+    .popup-header {
+      background: linear-gradient(135deg, #1a56db, #6366f1);
+      color: white;
+      padding: 10px 13px;
+      border-radius: 10px 10px 0 0;
+    }
+
+    .popup-header h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+
+    .popup-header .dist-badge {
+      font-size: 0.74rem;
+      opacity: 0.9;
+    }
+
+    .popup-body {
+      padding: 10px 13px 12px;
+    }
+
+    .section-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #6b7280;
+      margin-top: 10px;
+      margin-bottom: 5px;
+    }
+
+    .description {
+      font-size: 0.8rem;
+      color: #374151;
+      line-height: 1.45;
+    }
+
+    .phone-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .phone-item {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 7px;
+      padding: 6px 9px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .phone-name {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #111827;
+      flex: 1;
+    }
+
+    .phone-meta {
+      text-align: right;
+    }
+
+    .phone-price {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #1a56db;
+    }
+
+    .stock-badge {
+      display: inline-block;
+      font-size: 0.63rem;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 99px;
+      margin-top: 2px;
+    }
+
+    .stock-in_stock {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .stock-low_stock {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .stock-out_of_stock {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .action-btn {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      padding: 8px 4px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.68rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: opacity 0.2s;
+      font-family: inherit;
+    }
+
+    .action-btn:hover {
+      opacity: 0.82;
+    }
+
+    .action-btn .icon {
+      font-size: 1.15rem;
+    }
+
+    .btn-call {
+      background: #10b981;
+      color: white;
+    }
+
+    .btn-zalo {
+      background: #0068ff;
+      color: white;
+    }
+
+    .btn-navigate {
+      background: #f59e0b;
+      color: white;
+    }
+
+    /* Fix Leaflet popup padding */
+    .leaflet-popup-content {
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    .leaflet-popup-content-wrapper {
+      padding: 0 !important;
+      border-radius: 10px !important;
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18) !important;
+    }
+
+    /* ===== Ô NHẬP ĐỊA CHỈ TRÊN MAP ===== */
+    .map-wrapper {
+      position: relative;
+    }
+
+    .address-search-box {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      display: flex;
+      gap: 8px;
+      background: white;
+      padding: 8px 12px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      max-width: 90%;
+      width: 420px;
+    }
+
+    .address-search-box input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      outline: none;
+    }
+
+    .address-search-box input:focus {
+      border-color: #1a56db;
+    }
+
+    .address-search-box input::placeholder {
+      color: #9ca3af;
+    }
+
+    .address-search-box button {
+      padding: 10px 18px;
+      background: linear-gradient(135deg, #1a56db, #6366f1);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+
+    .address-search-box button:hover {
+      opacity: 0.9;
+    }
+
+    .address-search-box button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <span style="font-size:1.4rem">📍</span>
+    <h1>WebGIS – Cửa hàng điện thoại của bạn</h1>
+  </header>
+
+  <!-- Form ẩn để gửi lại vị trí người dùng bằng phương thức GET -->
+  <form id="locationForm" method="get" style="display:none">
+    <input type="hidden" name="lat" id="lat">
+    <input type="hidden" name="lng" id="lng">
+    {% if target_store_lat and target_store_lng %}
+    <input type="hidden" name="store_lat" id="store_lat" value="{{ target_store_lat|unlocalize }}">
+    <input type="hidden" name="store_lng" id="store_lng" value="{{ target_store_lng|unlocalize }}">
+    {% endif %}
+  </form>
+
+  <div class="map-wrapper">
+    <div class="address-search-box">
+      <input type="text" id="addressInput" placeholder="Nhập địa chỉ (VD: 123 Nguyễn Huệ, Quận 1, TP.HCM)" autocomplete="off">
+      <button type="button" id="searchAddressBtn">🔍 Tìm</button>
+    </div>
+    <div id="map"></div>
+  </div>
+
+  {% if user_lat and user_lng %}
+  <script>
+    var routeLayer = null;  // Dùng chung với drawRouteToStore để xóa tuyến cũ
+    // ===== MAP INIT =====
+    const userLat = {{ user_lat|unlocalize }};
+    const userLng = {{ user_lng|unlocalize }};
+
+    const map = L.map("map").setView([userLat, userLng], 14);
+    window.map = map;
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains: "abcd",
+      maxZoom: 20
+    }).addTo(map);
+    map.whenReady(function () {
+      map.invalidateSize();
+      requestAnimationFrame(function () { map.invalidateSize(); });
+    });
+    setTimeout(function () { map.invalidateSize(); }, 100);
+
+    // ===== USER MARKER =====
+    let userMarker = L.marker([userLat, userLng])
+      .addTo(map)
+      .bindPopup("<b>📍 Vị trí của bạn</b>")
+      .openPopup();
+
+    // ===== STORE MARKERS WITH RICH POPUP =====
+    {% for store, dist, time in nearest %}
+    (function () {
+      const storeLat = {{ store.latitude|default:0|unlocalize }};
+      const storeLng = {{ store.longitude|default:0|unlocalize }};
+
+      // --- Phone list HTML ---
+      let phonesHtml = '';
+      {% if store.phones.exists %}
+      phonesHtml += '<p class="section-label">📱 Danh sách điện thoại đang bán</p>';
+      phonesHtml += '<ul class="phone-list">';
+      {% for phone in store.phones.all %}
+      phonesHtml += '<li class="phone-item">'
+        + '<span class="phone-name">{{ phone.phone_name|escapejs }}</span>'
+        + '<div class="phone-meta">'
+        + '<div class="phone-price">{{ phone.price|floatformat:0 }} ₫</div>'
+        + '<span class="stock-badge stock-{{ phone.stock_status }}">{{ phone.get_stock_label }}</span>'
+        + '</div></li>';
+      {% endfor %}
+      phonesHtml += '</ul>';
+      {% endif %}
+
+      // --- Description HTML ---
+      let descHtml = '';
+      {% if store.description %}
+      descHtml = '<p class="section-label">🏪 Giới thiệu cửa hàng</p>'
+        + '<p class="description">{{ store.description|escapejs }}</p>';
+      {% endif %}
+
+      // --- Action buttons ---
+      const phone = "{{ store.phone_number|escapejs }}";
+      const zalo = "{{ store.zalo_number|escapejs }}";
+
+      const callBtn = phone
+        ? '<a href="tel:' + phone + '" class="action-btn btn-call"><span class="icon">📞</span>Gọi điện</a>'
+        : '<span class="action-btn btn-call" style="opacity:0.4;cursor:default"><span class="icon">📞</span>Gọi điện</span>';
+
+      const zaloBtn = zalo
+        ? '<a href="https://zalo.me/' + zalo + '" target="_blank" class="action-btn btn-zalo"><span class="icon">💬</span>Chat Zalo</a>'
+        : '<span class="action-btn btn-zalo" style="opacity:0.4;cursor:default"><span class="icon">💬</span>Chat Zalo</span>';
+
+      const navBtn = '<button type="button" onclick="event.stopPropagation(); drawRouteToStore(' + storeLat + ',' + storeLng + ', userLat, userLng)" class="action-btn btn-navigate"><span class="icon">🧭</span>Chỉ đường</button>';
+
+      const popupHtml = '<div class="store-popup">'
+        + '<div class="popup-header">'
+        + '<h3>🏪 {{ store.name|escapejs }}</h3>'
+        + '<div class="dist-badge">📏 {{ dist|floatformat:2 }} km &nbsp;⏱ {{ time|floatformat:0 }} phút</div>'
+        + '</div>'
+        + '<div class="popup-body">'
+        + descHtml
+        + phonesHtml
+        + '<div class="action-buttons">'
+        + callBtn + zaloBtn + navBtn
+        + '</div></div></div>';
+
+      const storeMarker = L.marker([storeLat, storeLng])
+        .addTo(map)
+        .bindPopup(popupHtml, { maxWidth: 310 });
+
+      // Chặn bubble lên map (nếu không: map click sẽ submit form và reload trang)
+      storeMarker.on('click', function (e) {
+        if (e.originalEvent) {
+          L.DomEvent.stopPropagation(e.originalEvent);
+        }
+        drawRouteToStore(storeLat, storeLng, userLat, userLng);
+      });
+
+      // Buffer rings
+      L.circle([storeLat, storeLng], { radius: 1000, color: "#10b981", fillOpacity: 0.12 }).addTo(map);
+      L.circle([storeLat, storeLng], { radius: 3000, color: "#f59e0b", fillOpacity: 0.1 }).addTo(map);
+      L.circle([storeLat, storeLng], { radius: 5000, color: "#ef4444", fillOpacity: 0.07 }).addTo(map);
+    })();
+    {% endfor %}
+
+    // ===== OSRM ROUTE: người dùng → cửa hàng gần nhất (lưu vào routeLayer để xóa được khi chọn cửa hàng khác) =====
+    {% if nearest %}
+    (function () {
+      const nsLat = {{ nearest.0.0.latitude|default_if_none:0|unlocalize }};
+      const nsLng = {{ nearest.0.0.longitude|default_if_none:0|unlocalize }};
+      if (!nsLat && !nsLng) return;
+      fetch(
+        "https://router.project-osrm.org/route/v1/driving/"
+        + userLng + "," + userLat + ";" + nsLng + "," + nsLat
+        + "?overview=full&geometries=geojson"
+      )
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          if (!data.routes || !data.routes[0]) return;
+          routeLayer = L.geoJSON(data.routes[0].geometry, {
+            style: { color: "#1a56db", weight: 5, opacity: 0.8 }
+          }).addTo(map);
+        })
+        .catch(function () { });
+    })();
+    {% endif %}
+
+    // ===== CLICK MAP (chỉ đổi vị trí khi click nền bản đồ, không phải marker/popup) =====
+    map.on("click", function (e) {
+      document.getElementById("lat").value = e.latlng.lat;
+      document.getElementById("lng").value = e.latlng.lng;
+      if (userMarker && map.hasLayer(userMarker)) {
+        map.removeLayer(userMarker);
+      }
+      userMarker = L.marker([e.latlng.lat, e.latlng.lng])
+        .addTo(map)
+        .bindPopup("📍 Vị trí bạn chọn")
+        .openPopup();
+      document.getElementById("locationForm").submit();
+    });
+  </script>
+
+
+  {% else %}
+  <script>
+    // Default map – center HCM City
+    const map = L.map("map").setView([10.762622, 106.660172], 12);
+    window.map = map;
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains: "abcd",
+      maxZoom: 20
+    }).addTo(map);
+    map.whenReady(function () {
+      map.invalidateSize();
+      requestAnimationFrame(function () { map.invalidateSize(); });
+    });
+    setTimeout(function () { map.invalidateSize(); }, 100);
+
+    let userMarker = null;
+
+    map.on("click", function (e) {
+      document.getElementById("lat").value = e.latlng.lat;
+      document.getElementById("lng").value = e.latlng.lng;
+      if (userMarker) map.removeLayer(userMarker);
+      userMarker = L.marker([e.latlng.lat, e.latlng.lng])
+        .addTo(map)
+        .bindPopup("📍 Vị trí bạn chọn")
+        .openPopup();
+      document.getElementById("locationForm").submit();
+    });
+  </script>
+  {% endif %}
+
+  <script>
+    // ===== DRAW ROUTE: vị trí xuất phát → cửa hàng =====
+    // fromLat, fromLng: nếu có (người dùng đã chọn vị trí trên map) thì dùng; không thì lấy GPS
+    var routeLayer = null;
+    function drawRouteToStore(storeLat, storeLng, fromLat, fromLng) {
+      var map = window.map;
+      if (!map || typeof L === "undefined") return;
+      // Xóa tuyến cũ ngay khi người dùng chọn cửa hàng mới
+      if (routeLayer) {
+        map.removeLayer(routeLayer);
+        routeLayer = null;
+      }
+      function doRoute(uLat, uLng) {
+        fetch(
+          "https://router.project-osrm.org/route/v1/driving/"
+          + uLng + "," + uLat + ";" + storeLng + "," + storeLat
+          + "?overview=full&geometries=geojson"
+        )
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (!data.routes || !data.routes[0]) return;
+            routeLayer = L.geoJSON(data.routes[0].geometry, {
+              style: { color: "#1a56db", weight: 5, opacity: 0.85 }
+            }).addTo(map);
+            map.fitBounds(routeLayer.getBounds(), { padding: [40, 40] });
+          })
+          .catch(function () {
+            window.open("https://www.google.com/maps/dir/?api=1&destination=" + storeLat + "," + storeLng, "_blank");
+          });
+      }
+      // Ưu tiên dùng vị trí đã chọn trên map (nếu có)
+      if (typeof fromLat === 'number' && typeof fromLng === 'number') {
+        doRoute(fromLat, fromLng);
+        return;
+      }
+      if (!navigator.geolocation) {
+        window.open("https://www.google.com/maps/dir/?api=1&destination=" + storeLat + "," + storeLng, "_blank");
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        function (pos) { doRoute(pos.coords.latitude, pos.coords.longitude); },
+        function () {
+          window.open("https://www.google.com/maps/dir/?api=1&destination=" + storeLat + "," + storeLng, "_blank");
+        }
+      );
+    }
+  </script>
+
+  <script>
+    // ===== TÌM ĐỊA CHỈ: Geocode bằng Nominatim (OpenStreetMap) =====
+    (function () {
+      var input = document.getElementById('addressInput');
+      var btn = document.getElementById('searchAddressBtn');
+      if (!input || !btn) return;
+
+      function searchAddress() {
+        var q = input.value.trim();
+        if (!q) {
+          alert('Vui lòng nhập địa chỉ cần tìm.');
+          return;
+        }
+        btn.disabled = true;
+        btn.textContent = 'Đang tìm...';
+
+        var url = 'https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(q) + '&format=json&limit=1';
+        fetch(url, {
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'PhoneStoreGIS/1.0'
+          }
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (!data || data.length === 0) {
+              alert('Không tìm thấy địa chỉ. Vui lòng thử lại với địa chỉ khác.');
+              return;
+            }
+            var lat = parseFloat(data[0].lat);
+            var lng = parseFloat(data[0].lon);
+            document.getElementById('lat').value = lat;
+            document.getElementById('lng').value = lng;
+            document.getElementById('locationForm').submit();
+          })
+          .catch(function () {
+            alert('Không thể tìm địa chỉ. Vui lòng kiểm tra kết nối.');
+          })
+          .finally(function () {
+            btn.disabled = false;
+            btn.textContent = '🔍 Tìm';
+          });
+      }
+
+      btn.addEventListener('click', searchAddress);
+      input.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          searchAddress();
+        }
+      });
+    })();
+  </script>
+
+  {% if not user_lat and target_store_lat and target_store_lng %}
+  <script>
+    window.addEventListener('DOMContentLoaded', function () {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          function (pos) {
+            window.location.href = "?lat=" + pos.coords.latitude + "&lng=" + pos.coords.longitude + "&store_lat={{ target_store_lat|unlocalize }}&store_lng={{ target_store_lng|unlocalize }}";
+          },
+          function () {
+            alert("Không lấy được vị trí GPS. Vui lòng cho phép quyền truy cập.");
+          }
+        );
+      }
+    });
+  </script>
+  {% endif %}
+
+  {# Tuyến đầu tiên đã được vẽ trong khối OSRM ở trên, không cần gọi drawRouteToStore lại #}
+
+</body>
+
+</html>

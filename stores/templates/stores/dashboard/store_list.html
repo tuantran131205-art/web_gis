@@ -1,0 +1,57 @@
+{% extends 'stores/dashboard/base_dashboard.html' %}
+
+{% block title %}Cửa hàng{% endblock %}
+{% block page_title %}🏪 Quản lý Cửa hàng{% endblock %}
+{% block active_stores %}active{% endblock %}
+
+{% block content %}
+<div class="section-head">
+  <h2>Danh sách cửa hàng ({{ stores|length }})</h2>
+  <a href="{% url 'dashboard_store_create' %}" class="btn btn-primary">➕ Thêm cửa hàng</a>
+</div>
+
+<div class="search-bar">
+  <form method="get" style="display:flex;gap:.5rem">
+    <input class="search-input" type="text" name="q" value="{{ q }}" placeholder="🔍 Tìm tên, địa chỉ..." />
+    <button type="submit" class="btn btn-secondary">Tìm</button>
+    {% if q %}<a href="{% url 'dashboard_store_list' %}" class="btn btn-secondary">✕ Xóa lọc</a>{% endif %}
+  </form>
+</div>
+
+<div class="card" style="padding:0">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>Tên cửa hàng</th><th>Địa chỉ</th><th>SĐT</th>
+          <th>Tọa độ</th><th>Sản phẩm</th><th style="text-align:right">Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for store in stores %}
+        <tr>
+          <td style="color:var(--muted)">{{ store.id }}</td>
+          <td><strong>{{ store.name }}</strong></td>
+          <td style="color:var(--muted);font-size:.82rem;max-width:200px">{{ store.address|default:'—' }}</td>
+          <td style="color:var(--muted)">{{ store.phone_number|default:'—' }}</td>
+          <td style="color:var(--muted);font-size:.78rem">{{ store.latitude|floatformat:4 }}, {{ store.longitude|floatformat:4 }}</td>
+          <td>
+            <span style="background:rgba(124,109,255,.1);color:var(--accent);padding:.15rem .6rem;border-radius:50px;font-size:.75rem;font-weight:700">
+              {{ store.product_count }}
+            </span>
+          </td>
+          <td style="text-align:right">
+            <div style="display:flex;gap:.4rem;justify-content:flex-end">
+              <a href="{% url 'dashboard_store_edit' store.pk %}" class="btn btn-secondary btn-sm">✏️ Sửa</a>
+              <a href="{% url 'dashboard_store_delete' store.pk %}" class="btn btn-danger btn-sm">🗑️</a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7"><div class="empty"><div class="icon">🏪</div><p>Chưa có cửa hàng nào</p></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

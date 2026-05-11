@@ -1,0 +1,79 @@
+{% extends 'stores/base.html' %}
+{% load humanize %}
+
+{% block title %}Đặt hàng thành công – PhoneStore{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:640px">
+
+  <div class="card" style="padding:2.5rem;text-align:center;margin-bottom:2rem">
+    <div style="font-size:4rem;margin-bottom:1rem">🎉</div>
+    <h1 style="font-size:1.75rem;font-weight:800;margin-bottom:.5rem">Đặt hàng thành công!</h1>
+    <p style="color:var(--text-muted);margin-bottom:.5rem">Cảm ơn bạn đã tin tưởng PhoneStore</p>
+    <p style="color:var(--accent2);font-weight:700;font-size:1.1rem">Mã đơn hàng: #{{ order.id }}</p>
+  </div>
+
+  <!-- Order Details -->
+  <div class="card" style="padding:1.75rem;margin-bottom:1.5rem">
+    <h2 style="font-size:1rem;font-weight:700;margin-bottom:1.25rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Thông tin đơn hàng</h2>
+    <div style="display:grid;gap:.75rem;font-size:.9375rem">
+      <div style="display:flex;justify-content:space-between">
+        <span style="color:var(--text-muted)">Người nhận</span><span style="font-weight:600">{{ order.full_name }}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between">
+        <span style="color:var(--text-muted)">Số điện thoại</span><span style="font-weight:600">{{ order.phone }}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;gap:1rem">
+        <span style="color:var(--text-muted);flex-shrink:0">Địa chỉ</span><span style="font-weight:600;text-align:right">{{ order.address }}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between">
+        <span style="color:var(--text-muted)">Thanh toán</span><span style="font-weight:600">{{ order.get_payment_method_display }}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:.75rem;margin-top:.25rem">
+        <span style="color:var(--text-muted)">Trạng thái</span>
+        <span class="status-badge status-in_stock" style="font-size:.8rem">{{ order.get_status_display }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Items -->
+  <div class="card" style="padding:1.5rem;margin-bottom:1.5rem">
+    <h2 style="font-size:1rem;font-weight:700;margin-bottom:1rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Sản phẩm đã đặt</h2>
+    {% for item in order.items.all %}
+    <div style="display:flex;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid var(--border);font-size:.9rem">
+      <span>{{ item.product_name }} <span style="color:var(--text-muted)">x{{ item.quantity }}</span></span>
+      <span style="font-weight:600;color:var(--accent2)">{{ item.get_subtotal|intcomma }} ₫</span>
+    </div>
+    {% endfor %}
+    <div style="display:flex;justify-content:space-between;font-weight:800;font-size:1.1rem;padding-top:.9rem">
+      <span>Tổng cộng</span>
+      <span style="color:var(--accent2)">{{ order.total_amount|intcomma }} ₫</span>
+    </div>
+  </div>
+
+  {% if order.payment_method == 'bank' %}
+  <div class="card" style="padding:1.5rem;margin-bottom:1.5rem;border-color:var(--accent)">
+    <h2 style="font-size:1rem;font-weight:700;margin-bottom:1rem">🏦 Thông tin chuyển khoản</h2>
+    <div style="font-size:.9375rem;line-height:2;color:var(--text-muted)">
+      <p>Ngân hàng: <strong style="color:var(--text)">Vietcombank</strong></p>
+      <p>Số tài khoản: <strong style="color:var(--text)">1234567890</strong></p>
+      <p>Chủ tài khoản: <strong style="color:var(--text)">NGUYEN VAN A</strong></p>
+      <p>Nội dung: <strong style="color:var(--accent2)">DH{{ order.id }} - {{ order.full_name }}</strong></p>
+      <p>Số tiền: <strong style="color:var(--accent2)">{{ order.total_amount|intcomma }} ₫</strong></p>
+    </div>
+  </div>
+  {% elif order.payment_method == 'momo' %}
+  <div class="card" style="padding:1.5rem;margin-bottom:1.5rem;border-color:#b000b5">
+    <h2 style="font-size:1rem;font-weight:700;margin-bottom:1rem">💜 Thanh toán MoMo</h2>
+    <p style="color:var(--text-muted)">Số điện thoại MoMo: <strong style="color:var(--text)">0901234567</strong></p>
+    <p style="color:var(--text-muted)">Nội dung: <strong style="color:var(--accent2)">DH{{ order.id }}</strong></p>
+  </div>
+  {% endif %}
+
+  <div style="display:flex;gap:1rem;justify-content:center">
+    <a href="/my-orders/" class="btn btn-secondary">📋 Xem đơn hàng</a>
+    <a href="/" class="btn btn-primary">🛍️ Tiếp tục mua sắm</a>
+  </div>
+
+</div>
+{% endblock %}

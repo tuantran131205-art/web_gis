@@ -1,0 +1,121 @@
+{% extends 'stores/base.html' %}
+{% load humanize %}
+
+{% block title %}{{ product.phone_name }} – PhoneStore{% endblock %}
+{% block meta_description %}{{ product.phone_name }} giá {{ product.price|intcomma }} VNĐ tại {{ product.store.name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <!-- Breadcrumb -->
+  <nav style="font-size:.85rem;color:var(--text-muted);margin-bottom:1.5rem">
+    <a href="/">Trang chủ</a> › <span>{{ product.phone_name }}</span>
+  </nav>
+
+  <!-- Main detail -->
+  <div class="grid-2" style="align-items:start;gap:2.5rem;margin-bottom:3rem">
+    <!-- Image -->
+    <div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;aspect-ratio:1;display:flex;align-items:center;justify-content:center;">
+        {% if product.image %}
+          <img src="{{ product.image.url }}" alt="{{ product.phone_name }}" style="width:100%;height:100%;object-fit:cover" />
+        {% elif product.image_url %}
+          <img src="{{ product.image_url }}" alt="{{ product.phone_name }}" style="width:100%;height:100%;object-fit:cover" />
+        {% else %}
+          <span style="font-size:5rem">{{ emoji }}</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Info -->
+    <div>
+      <span style="font-size:.8rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px">{{ emoji }} {{ brand|upper }}</span>
+      <h1 style="font-size:1.8rem;font-weight:800;margin:.5rem 0">{{ product.phone_name }}</h1>
+
+      <div style="font-size:1.8rem;font-weight:800;color:var(--accent2);margin:1rem 0">
+        {{ product.price|intcomma }} ₫
+      </div>
+
+      {% if product.stock_status == 'in_stock' %}
+        <span class="status-badge status-in_stock">✅ Còn hàng</span>
+      {% elif product.stock_status == 'low_stock' %}
+        <span class="status-badge status-low_stock">⚠️ Sắp hết hàng</span>
+      {% else %}
+        <span class="status-badge status-out_of_stock">❌ Hết hàng</span>
+      {% endif %}
+
+      <div style="font-size:.9rem;color:var(--text-muted);margin:.75rem 0">
+        🏪 Cửa hàng: <a href="#">{{ product.store.name }}</a>
+        {% if product.store.address %} · {{ product.store.address }}{% endif %}
+      </div>
+
+      {% if product.description %}
+      <p style="color:var(--text-muted);font-size:.9375rem;line-height:1.7;margin:1rem 0;border-top:1px solid var(--border);padding-top:1rem">
+        {{ product.description }}
+      </p>
+      {% endif %}
+
+      <!-- Add to cart -->
+      <div style="display:flex;gap:.75rem;margin-top:1.5rem;flex-wrap:wrap">
+        {% if not disabled %}
+          <form method="post" action="/cart/add/{{ product.pk }}/">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="/product/{{ product.pk }}/" />
+            <button type="submit" class="btn btn-primary" id="add-to-cart-btn">
+              🛒 Thêm vào giỏ hàng
+            </button>
+          </form>
+          <a href="/checkout/" class="btn btn-success">⚡ Mua ngay</a>
+        {% else %}
+          <button class="btn btn-secondary" disabled>Hết hàng</button>
+        {% endif %}
+        <a href="/find/?store_lat={{ product.store.latitude }}&store_lng={{ product.store.longitude }}" class="btn btn-secondary">🗺️ Đường đến cửa hàng</a>
+      </div>
+
+      <!-- Payment info -->
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-top:1.5rem;font-size:.875rem;color:var(--text-muted);display:flex;gap:1.5rem;flex-wrap:wrap">
+        <span>🚚 Giao hàng toàn quốc</span>
+        <span>🔒 Bảo hành chính hãng</span>
+        <span>💳 COD / Chuyển khoản</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Specs -->
+  {% if product.specs %}
+  <div style="margin-bottom:3rem">
+    <h2 class="section-title">📋 Thông số kỹ thuật</h2>
+    <div class="card" style="padding:1.5rem">
+      <pre style="white-space:pre-wrap;color:var(--text-muted);font-family:inherit;font-size:.9rem;line-height:1.8">{{ product.specs }}</pre>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Related -->
+  {% if related %}
+  <div>
+    <h2 class="section-title">📱 Sản phẩm cùng cửa hàng</h2>
+    <div class="grid-4">
+      {% for item in related %}
+      <a href="/product/{{ item.phone.pk }}/" class="card" style="display:block;text-decoration:none;color:inherit">
+        <div style="height:160px;display:flex;align-items:center;justify-content:center;background:var(--surface2)">
+          {% if item.phone.image %}
+            <img src="{{ item.phone.image.url }}" alt="{{ item.phone.phone_name }}" style="height:100%;width:100%;object-fit:cover" />
+          {% elif item.phone.image_url %}
+            <img src="{{ item.phone.image_url }}" alt="{{ item.phone.phone_name }}" style="height:100%;width:100%;object-fit:cover" />
+          {% else %}
+            <span style="font-size:3rem">{{ item.emoji }}</span>
+          {% endif %}
+        </div>
+        <div style="padding:1rem">
+          <p style="font-weight:600;font-size:.9rem;margin-bottom:.4rem">{{ item.phone.phone_name }}</p>
+          <p class="price" style="font-size:.95rem">{{ item.phone.price|intcomma }} ₫</p>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

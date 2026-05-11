@@ -1,0 +1,82 @@
+{% extends 'stores/dashboard/base_dashboard.html' %}
+{% load humanize %}
+
+{% block title %}Sản phẩm{% endblock %}
+{% block page_title %}📱 Quản lý Sản phẩm{% endblock %}
+{% block active_products %}active{% endblock %}
+
+{% block content %}
+<div class="section-head">
+  <h2>Danh sách sản phẩm ({{ products|length }})</h2>
+  <a href="{% url 'dashboard_product_create' %}" class="btn btn-primary">➕ Thêm sản phẩm</a>
+</div>
+
+<!-- Filters -->
+<div class="search-bar">
+  <form method="get" style="display:flex;gap:.5rem;flex-wrap:wrap">
+    <input class="search-input" type="text" name="q" value="{{ q }}" placeholder="🔍 Tên sản phẩm, cửa hàng..." />
+    <select name="status" class="search-input" style="min-width:auto">
+      <option value="">Tất cả trạng thái</option>
+      <option value="in_stock" {% if status_filter == 'in_stock' %}selected{% endif %}>Còn hàng</option>
+      <option value="low_stock" {% if status_filter == 'low_stock' %}selected{% endif %}>Sắp hết</option>
+      <option value="out_of_stock" {% if status_filter == 'out_of_stock' %}selected{% endif %}>Hết hàng</option>
+    </select>
+    <select name="store" class="search-input" style="min-width:auto">
+      <option value="">Tất cả cửa hàng</option>
+      {% for store in stores %}
+      <option value="{{ store.pk }}" {% if store_filter == store.pk|stringformat:"s" %}selected{% endif %}>{{ store.name }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-secondary">Lọc</button>
+    {% if q or status_filter or store_filter %}
+    <a href="{% url 'dashboard_product_list' %}" class="btn btn-secondary">✕ Xóa lọc</a>
+    {% endif %}
+  </form>
+</div>
+
+<div class="card" style="padding:0">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>Sản phẩm</th><th>Cửa hàng</th><th>Giá</th>
+          <th>Tình trạng</th><th>Ngày thêm</th><th style="text-align:right">Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for product in products %}
+        <tr>
+          <td style="color:var(--muted)">{{ product.id }}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:.65rem">
+              <div style="width:36px;height:36px;border-radius:8px;overflow:hidden;background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center">
+                {% if product.image_url %}
+                  <img src="{{ product.image_url }}" alt="" style="width:100%;height:100%;object-fit:cover" />
+                {% else %}
+                  <span style="font-size:1.1rem">📱</span>
+                {% endif %}
+              </div>
+              <div>
+                <div style="font-weight:600;font-size:.875rem">{{ product.phone_name }}</div>
+              </div>
+            </div>
+          </td>
+          <td style="color:var(--muted);font-size:.82rem">{{ product.store.name }}</td>
+          <td style="font-weight:700;color:#ff6b85">{{ product.price|intcomma }} ₫</td>
+          <td><span class="badge badge-{{ product.stock_status }}">{{ product.get_stock_label }}</span></td>
+          <td style="color:var(--muted);font-size:.8rem">{{ product.created_at|date:"d/m/Y" }}</td>
+          <td style="text-align:right">
+            <div style="display:flex;gap:.4rem;justify-content:flex-end">
+              <a href="{% url 'dashboard_product_edit' product.pk %}" class="btn btn-secondary btn-sm">✏️ Sửa</a>
+              <a href="{% url 'dashboard_product_delete' product.pk %}" class="btn btn-danger btn-sm">🗑️</a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7"><div class="empty"><div class="icon">📱</div><p>Chưa có sản phẩm nào</p></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
